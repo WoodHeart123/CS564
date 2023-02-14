@@ -1,0 +1,30 @@
+Item
+	ItemID INTEGER Primary Key,
+	SellerID TEXT, 
+	Name TEXT ,
+	Current REAL,
+	BuyPrice REAL,
+	FirstBid TEXT,
+	NumberOfBids INTEGER,
+	Started TEXT,
+	Ends TEXT,
+	Description TEXT
+
+
+
+Category
+	ItemID INTEGER,
+	Name TEXT
+
+
+Bids
+	ItemID INTEGER,
+	BidderID TEXT,
+	Time INTEGER,
+	Amount REAL
+
+User
+	UserID TEXT Primary key,
+	Rating REAL,
+	Location TEXT,
+	Country TEXT
