@@ -3,13 +3,13 @@ Item
 	SellerID TEXT, 
 	Name TEXT ,
 	Current REAL,
-	BuyPrice REAL,
-	FirstBid TEXT,
+
+	FirstBid REAL,
 	NumberOfBids INTEGER,
 	Started TEXT,
 	Ends TEXT,
-	Description TEXT
-
+	Description TEXT,
+	BuyPrice REAL
 
 
 Category
@@ -17,10 +17,10 @@ Category
 	Name TEXT
 
 
-Bids
+Bid
 	ItemID INTEGER,
 	BidderID TEXT,
-	Time INTEGER,
+	Time TEXT,
 	Amount REAL
 
 User
