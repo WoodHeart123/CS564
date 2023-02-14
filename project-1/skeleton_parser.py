@@ -80,7 +80,7 @@ def parseJson(json_file):
         items = loads(f.read())['Items'] # creates a Python dictionary of Items for the supplied json file
         for item in items:
             # pass all item without category
-            if item["Category"] not in item.keys():
+            if "Category" not in item.keys():
                 pass
 
             for category in item["Category"]:
