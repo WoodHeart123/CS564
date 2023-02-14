@@ -99,9 +99,10 @@ def parseJson(json_file):
                 userList.append([item["Seller"]["UserID"], item["Seller"]["Rating"], item["Location"], item["Country"]])
                 userIDDict[item["Seller"]["UserID"]] = userList[-1]
             # add item 
-            itemList.append([item["ItemID"], item["Seller"]["UserID"], item["Name"],
+            if item["Description"] in item.keys():
+                itemList.append([item["ItemID"], item["Seller"]["UserID"], item["Name"],
                             transformDollar(item["Currently"]), transformDollar(item["First_Bid"]), item["Number_of_Bids"], 
-                            transformDttm(item["Started"]), transformDttm(item["Ends"]), item["Description"], 
+                            transformDttm(item["Started"]), transformDttm(item["Ends"]), "\""+item["Description"]+"\"", 
                             item.get("Buy_Price","NULL")])
 
     # create load files    
