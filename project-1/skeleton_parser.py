@@ -101,7 +101,7 @@ def parseJson(json_file):
             # add item 
             itemList.append([item["ItemID"], item["Seller"]["UserID"], item["Name"],
                             transformDollar(item["Currently"]), transformDollar(item["First_Bid"]), item["Number_of_Bids"], 
-                            transformDttm(item["Started"]), transformDttm(item["Ends"]), item.get("Description","NULL"), 
+                            transformDttm(item["Started"]), transformDttm(item["Ends"]), item["Description"], 
                             item.get("Buy_Price","NULL")])
 
     # create load files    
@@ -113,7 +113,10 @@ def parseJson(json_file):
 def createLoadFile(data, filename, separater="|"):
     with open(filename, "a+") as f:
         for row in data:
+          try:
             f.write(separater.join(row) + '\n')
+          except:
+            pass
         
 
 """
