@@ -29,11 +29,15 @@ from json import loads
 from re import sub
 
 columnSeparator = "|"
+userIDDict = {}
 
 # Dictionary of months used for date transformation
 MONTHS = {'Jan':'01','Feb':'02','Mar':'03','Apr':'04','May':'05','Jun':'06',\
         'Jul':'07','Aug':'08','Sep':'09','Oct':'10','Nov':'11','Dec':'12'}
 
+def escape(str):
+  return "\"" + str.replace("\"","\"\"") + "\""
+  
 """
 Returns true if a file ends in .json
 """
@@ -74,7 +78,7 @@ item in the data set. Your job is to extend this functionality to create all
 of the necessary SQL tables for your database.
 """
 def parseJson(json_file):
-    userIDDict = {}
+    global userIDDict
     categoryList, itemList, bidList = [],[],[]
     with open(json_file, 'r') as f:
         items = loads(f.read())['Items'] # creates a Python dictionary of Items for the supplied json file
@@ -88,27 +92,26 @@ def parseJson(json_file):
             # traverse bids if exist
             if item["Bids"] != None:
                 for bid in item["Bids"]:
-                    bidList.append([item["ItemID"], bid["Bid"]["Bidder"]["UserID"], transformDttm(bid["Bid"]["Time"]), transformDollar(bid["Bid"]["Amount"])])
+                    bidList.append([item["ItemID"],"\"" + bid["Bid"]["Bidder"]["UserID"] + "\"", transformDttm(bid["Bid"]["Time"]), transformDollar(bid["Bid"]["Amount"])])
                 if bid["Bid"]["Bidder"]["UserID"] not in userIDDict.keys():
                     bidder = bid["Bid"]["Bidder"]
-                    userIDDict[bidder["UserID"]] = [bidder["UserID"], bidder["Rating"], bidder.get("Location","NULL"), bidder.get("Country","NULL")]
+                    userIDDict[bidder["UserID"]] = ["\"" + bidder["UserID"] + "\"", bidder["Rating"], escape(bidder.get("Location","NULL")), escape(bidder.get("Country","NULL"))]
             # check if seller info is in the list
             if item["Seller"]["UserID"] in userIDDict.keys():
                 # if in the list update location and country 
                 userIDDict[item["Seller"]["UserID"]][2] = item["Location"]
                 userIDDict[item["Seller"]["UserID"]][3] = item["Country"]
             else:
-                userIDDict[item["Seller"]["UserID"]] = [item["Seller"]["UserID"], item["Seller"]["Rating"], item["Location"], item["Country"]]
+                userIDDict[item["Seller"]["UserID"]] = [escape(item["Seller"]["UserID"]) , item["Seller"]["Rating"], escape(item["Location"]), escape(item["Country"])]
             # add item 
             if item["Description"] in item.keys():
-                itemList.append([item["ItemID"], item["Seller"]["UserID"], item["Name"],
+                itemList.append([item["ItemID"], escape(item["Seller"]["UserID"]), escape(item["Name"]),
                             transformDollar(item["Currently"]), transformDollar(item["First_Bid"]), item["Number_of_Bids"], 
-                            transformDttm(item["Started"]), transformDttm(item["Ends"]), "\""+item["Description"]+"\"", 
+                            transformDttm(item["Started"]), transformDttm(item["Ends"]), escape(item["Description"]), 
                             item.get("Buy_Price","NULL")])
 
     # create load files    
     createLoadFile(itemList, "item.dat")
-    createLoadFile(userIDDict.values(), "user.dat")
     createLoadFile(bidList, "bid.dat")
     createLoadFile(categoryList, "category.dat")
 
@@ -126,6 +129,7 @@ Loops through each json files provided on the command line and passes each file
 to the parser
 """
 def main(argv):
+    global userIDDict
     if len(argv) < 2:
         print("Usage: python skeleton_json_parser.py <path to json files>",file=sys.stderr)
         sys.exit(1)
@@ -134,6 +138,7 @@ def main(argv):
         if isJson(f):
             parseJson(f)
             print("Success parsing ",f)
+    createLoadFile(userIDDict.values(), "user.dat")
 
 if __name__ == '__main__':
     main(sys.argv)
