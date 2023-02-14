@@ -75,11 +75,14 @@ of the necessary SQL tables for your database.
 """
 def parseJson(json_file):
     userIDDict = {}
-    categoryList, itemList, bidList, userList = [],[],[],[]
+    categoryList, itemList, bidList = [],[],[]
     with open(json_file, 'r') as f:
         items = loads(f.read())['Items'] # creates a Python dictionary of Items for the supplied json file
         for item in items:
-            # load category
+            # pass all item without category
+            if item["Category"] not in item.keys():
+                pass
+
             for category in item["Category"]:
                 categoryList.append([item["ItemID"], category])
             # traverse bids if exist
@@ -88,16 +91,14 @@ def parseJson(json_file):
                     bidList.append([item["ItemID"], bid["Bid"]["Bidder"]["UserID"], transformDttm(bid["Bid"]["Time"]), transformDollar(bid["Bid"]["Amount"])])
                 if bid["Bid"]["Bidder"]["UserID"] not in userIDDict.keys():
                     bidder = bid["Bid"]["Bidder"]
-                    userList.append([bidder["UserID"], bidder["Rating"], bidder.get("Location","NULL"), bidder.get("Country","NULL")])
-                    userIDDict[bidder["UserID"]] = userList[-1]
+                    userIDDict[bidder["UserID"]] = [bidder["UserID"], bidder["Rating"], bidder.get("Location","NULL"), bidder.get("Country","NULL")]
             # check if seller info is in the list
             if item["Seller"]["UserID"] in userIDDict.keys():
                 # if in the list update location and country 
                 userIDDict[item["Seller"]["UserID"]][2] = item["Location"]
                 userIDDict[item["Seller"]["UserID"]][3] = item["Country"]
             else:
-                userList.append([item["Seller"]["UserID"], item["Seller"]["Rating"], item["Location"], item["Country"]])
-                userIDDict[item["Seller"]["UserID"]] = userList[-1]
+                userIDDict[item["Seller"]["UserID"]] = [item["Seller"]["UserID"], item["Seller"]["Rating"], item["Location"], item["Country"]]
             # add item 
             if item["Description"] in item.keys():
                 itemList.append([item["ItemID"], item["Seller"]["UserID"], item["Name"],
@@ -107,7 +108,7 @@ def parseJson(json_file):
 
     # create load files    
     createLoadFile(itemList, "item.dat")
-    createLoadFile(userList, "user.dat")
+    createLoadFile(userIDDict.values(), "user.dat")
     createLoadFile(bidList, "bid.dat")
     createLoadFile(categoryList, "category.dat")
 
