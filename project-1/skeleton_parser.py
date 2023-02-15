@@ -99,10 +99,9 @@ def parseJson(json_file):
                 userIDDict[item["Seller"]["UserID"]] = [escape(item["Seller"]["UserID"]) , item["Seller"]["Rating"], escape(item["Location"]), escape(item["Country"])]
 
             # add item 
-            if item["Description"] != None:
-                itemList.append([item["ItemID"], escape(item["Seller"]["UserID"]), escape(item["Name"]),
+            itemList.append([item["ItemID"], escape(item["Seller"]["UserID"]), escape(item["Name"]),
                             transformDollar(item["Currently"]), transformDollar(item["First_Bid"]), item["Number_of_Bids"], 
-                            transformDttm(item["Started"]), transformDttm(item["Ends"]), escape(item["Description"]), 
+                            transformDttm(item["Started"]), transformDttm(item["Ends"]), escape(item.get("Description","NULL")), 
                             item.get("Buy_Price","NULL")])
 
     # create load files    
