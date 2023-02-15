@@ -97,14 +97,11 @@ def parseJson(json_file):
                     bidder = bid["Bid"]["Bidder"]
                     userIDDict[bidder["UserID"]] = ["\"" + bidder["UserID"] + "\"", bidder["Rating"], escape(bidder.get("Location","NULL")), escape(bidder.get("Country","NULL"))]
             # check if seller info is in the list
-            if item["Seller"]["UserID"] in userIDDict.keys():
-                # if in the list update location and country 
-                userIDDict[item["Seller"]["UserID"]][2] = item["Location"]
-                userIDDict[item["Seller"]["UserID"]][3] = item["Country"]
-            else:
+            if item["Seller"]["UserID"] not in userIDDict.keys():
                 userIDDict[item["Seller"]["UserID"]] = [escape(item["Seller"]["UserID"]) , item["Seller"]["Rating"], escape(item["Location"]), escape(item["Country"])]
+
             # add item 
-            if item["Description"] in item.keys():
+            if "Description" in item.keys():
                 itemList.append([item["ItemID"], escape(item["Seller"]["UserID"]), escape(item["Name"]),
                             transformDollar(item["Currently"]), transformDollar(item["First_Bid"]), item["Number_of_Bids"], 
                             transformDttm(item["Started"]), transformDttm(item["Ends"]), escape(item["Description"]), 
@@ -122,7 +119,7 @@ def createLoadFile(data, filename, separater="|"):
             f.write(separater.join(row) + '\n')
           except:
             pass
-        
+
 
 """
 Loops through each json files provided on the command line and passes each file
