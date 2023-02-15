@@ -83,9 +83,6 @@ def parseJson(json_file):
     with open(json_file, 'r') as f:
         items = loads(f.read())['Items'] # creates a Python dictionary of Items for the supplied json file
         for item in items:
-            # pass all item without category
-            if "Category" not in item.keys():
-                pass
 
             for category in item["Category"]:
                 categoryList.append([item["ItemID"], category])
@@ -93,15 +90,16 @@ def parseJson(json_file):
             if item["Bids"] != None:
                 for bid in item["Bids"]:
                     bidList.append([item["ItemID"],"\"" + bid["Bid"]["Bidder"]["UserID"] + "\"", transformDttm(bid["Bid"]["Time"]), transformDollar(bid["Bid"]["Amount"])])
-                if bid["Bid"]["Bidder"]["UserID"] not in userIDDict.keys():
-                    bidder = bid["Bid"]["Bidder"]
-                    userIDDict[bidder["UserID"]] = ["\"" + bidder["UserID"] + "\"", bidder["Rating"], escape(bidder.get("Location","NULL")), escape(bidder.get("Country","NULL"))]
+                
+                    if bid["Bid"]["Bidder"]["UserID"] not in userIDDict.keys():
+                        bidder = bid["Bid"]["Bidder"]
+                        userIDDict[bidder["UserID"]] = ["\"" + bidder["UserID"] + "\"", bidder["Rating"], escape(bidder.get("Location","NULL")), escape(bidder.get("Country","NULL"))]
             # check if seller info is in the list
             if item["Seller"]["UserID"] not in userIDDict.keys():
                 userIDDict[item["Seller"]["UserID"]] = [escape(item["Seller"]["UserID"]) , item["Seller"]["Rating"], escape(item["Location"]), escape(item["Country"])]
 
             # add item 
-            if "Description" in item.keys():
+            if item["Description"] != None:
                 itemList.append([item["ItemID"], escape(item["Seller"]["UserID"]), escape(item["Name"]),
                             transformDollar(item["Currently"]), transformDollar(item["First_Bid"]), item["Number_of_Bids"], 
                             transformDttm(item["Started"]), transformDttm(item["Ends"]), escape(item["Description"]), 
@@ -115,10 +113,7 @@ def parseJson(json_file):
 def createLoadFile(data, filename, separater="|"):
     with open(filename, "a+") as f:
         for row in data:
-          try:
             f.write(separater.join(row) + '\n')
-          except:
-            pass
 
 
 """
