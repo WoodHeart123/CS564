@@ -1,1 +1,2 @@
-SELECT COUNT(UserID) from User;
+SELECT COUNT(UserID) 
+FROM User;
