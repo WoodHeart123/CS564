@@ -2,8 +2,6 @@
 #define CS564_PROJECT_PAGE_CACHE_HPP
 
 #include "dependencies/sqlite/sqlite3.h"
-
-#include <memory>
 #include <cstdlib>
 
 class Page : sqlite3_pcache_page {
