@@ -31,7 +31,7 @@ int LRUReplacementPageCache::getNumPages() const {
 }
 
 Page *LRUReplacementPageCache::fetchPage(unsigned pageId, bool allocate) {
-    ++numFetches_;
+  ++numFetches_;
 
   // If the page is already in the cache, pin it and return the pointer.
   auto pagesIterator = pages_.find(pageId);
@@ -60,19 +60,12 @@ Page *LRUReplacementPageCache::fetchPage(unsigned pageId, bool allocate) {
     return page;
   }
 
-  // The number of pages in the cache is greater than or equal to the maximum.
-  // Choose an existing unpinned page to replace. Initialize an iterator at a
-  // random page in `pages_`.
-  while(!freePageIDList.empty() && getNumPages() >= maxNumPages_){
-    free(pages_[freePageIDList[0]]);
-    pages_.erase(freePageIDList[0]);
+  // return existing unpinned page if there is an available page
+  if(!freePageIDList.empty()){
+    int unpinnedPageID = freePageIDList[0];
     freePageIDList.erase(freePageIDList.begin());
-  }
-
-  if(getNumPages() < maxNumPages_){
-    auto page = new LRUReplacementPage(pageSize_, extraSize_, pageId, true);
-    pages_.emplace(pageId, page);
-    return page;
+    pages_[unpinnedPageID] -> pinned = true;
+    return pages_[unpinnedPageID];
   }
 
   // All pages are pinned. Return a null pointer.
