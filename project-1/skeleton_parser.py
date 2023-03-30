@@ -28,7 +28,6 @@ import sys
 from json import loads
 from re import sub
 
-columnSeparator = "|"
 userIDDict = {}
 
 # Dictionary of months used for date transformation
@@ -87,13 +86,13 @@ def parseJson(json_file):
         items = loads(f.read())['Items'] # creates a Python dictionary of Items for the supplied json file
         for item in items:
 
-            for category in item["Category"]:
+            for category in set(item["Category"]):
                 categoryList.append([item["ItemID"], category])
+
             # traverse bids if exist
-            if item["Bids"] != None:
+            if item["Bids"] is not None:
                 for bid in item["Bids"]:
-                    bidList.append([item["ItemID"],"\"" + bid["Bid"]["Bidder"]["UserID"] + "\"", transformDttm(bid["Bid"]["Time"]), transformDollar(bid["Bid"]["Amount"])])
-                
+                    bidList.append([item["ItemID"],"\"" + bid["Bid"]["Bidder"]["UserID"] + "\"", transformDttm(bid["Bid"]["Time"]), transformDollar(bid["Bid"]["Amount"])])               
                     if bid["Bid"]["Bidder"]["UserID"] not in userIDDict.keys():
                         bidder = bid["Bid"]["Bidder"]
                         userIDDict[bidder["UserID"]] = ["\"" + bidder["UserID"] + "\"", bidder["Rating"], escape(bidder.get("Location","NULL")), escape(bidder.get("Country","NULL"))]
