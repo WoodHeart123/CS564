@@ -81,6 +81,7 @@ of the necessary SQL tables for your database.
 """
 def parseJson(json_file):
     global userIDDict
+    global count
     categoryList, itemList, bidList = [],[],[]
     with open(json_file, 'r') as f:
         items = loads(f.read())['Items'] # creates a Python dictionary of Items for the supplied json file
