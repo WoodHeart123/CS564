@@ -108,7 +108,7 @@ void LRUReplacementPageCache::changePageId(Page *page, unsigned newPageId) {
     return;
   }
   // put it back to free list
-  freePageIDList.push_back(newPageID);  
+  freePageIDList.push_back(newPageId);  
 }
 
 void LRUReplacementPageCache::discardPages(unsigned pageIdLimit) {
