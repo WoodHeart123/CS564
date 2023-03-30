@@ -1,6 +1,5 @@
 #include "page_cache.hpp"
 
-#include <memory>
 
 Page::Page(int pageSize, int extraSize) : sqlite3_pcache_page() {
   pBuf = std::aligned_alloc(8, pageSize);
