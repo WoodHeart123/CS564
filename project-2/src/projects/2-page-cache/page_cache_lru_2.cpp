@@ -103,8 +103,7 @@ void LRU2ReplacementPageCache::changePageId(Page *page, unsigned newPageId) {
     std::vector<unsigned>::iterator position = std::find(freePageIDList.begin(), freePageIDList.end(), newPage->pageId);
     if (position != freePageIDList.end())
       freePageIDList.erase(position);
-    }
-  
+  }
   newPage->pageId = newPageId;
 
   // Attempt to insert a page with page ID `newPageId` into `pages_`.
@@ -114,7 +113,10 @@ void LRU2ReplacementPageCache::changePageId(Page *page, unsigned newPageId) {
   if (!success) {
     delete pagesIterator->second;
     pagesIterator->second = newPage;
+    return;
   }
+  // put it back to free list
+  freePageIDList.push_back(newPageID);  
 }
 
 void LRU2ReplacementPageCache::discardPages(unsigned pageIdLimit) {
