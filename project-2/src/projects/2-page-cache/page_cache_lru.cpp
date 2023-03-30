@@ -37,6 +37,11 @@ Page *LRUReplacementPageCache::fetchPage(unsigned pageId, bool allocate) {
   auto pagesIterator = pages_.find(pageId);
   if (pagesIterator != pages_.end()) {
     ++numHits_;
+    // remove from free list
+    std::vector<unsigned>::iterator position = std::find(freePageIDList.begin(), freePageIDList.end(), pageId);
+    if (position != freePageIDList.end())
+      freePageIDList.erase(position);
+    }
     pagesIterator->second->pinned = true;
     return pagesIterator->second;
   }
