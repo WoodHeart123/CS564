@@ -2,7 +2,6 @@
 #define CS564_PROJECT_PAGE_CACHE_HPP
 
 #include "dependencies/sqlite/sqlite3.h"
-#include <cstdlib>
 
 class Page : sqlite3_pcache_page {
 public:
@@ -17,6 +16,9 @@ public:
   Page &operator=(const Page &) = delete;
 
   ~Page();
+
+private:
+  void *pBufInner_;
 };
 
 class PageCache {
@@ -32,7 +34,6 @@ public:
    * Destroy the PageCache.
    */
   virtual ~PageCache() = default;
-
 
   /**
    * Set the maximum number of pages in the cache. Discard unpinned pages until

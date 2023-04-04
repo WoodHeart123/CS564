@@ -87,15 +87,9 @@ void LRUReplacementPageCache::unpinPage(Page *page, bool discard) {
 
 void LRUReplacementPageCache::changePageId(Page *page, unsigned newPageId) {
   auto *newPage = (LRUReplacementPage *) page;
-
+  unsigned oldPageId = newPage -> pageId;
   // Remove the old page ID from `pages_` and change the page ID.
   pages_.erase(newPage->pageId);
-  // remove it from free list
-  if(!newPage->pinned){
-    std::vector<unsigned>::iterator position = std::find(freePageIDList.begin(), freePageIDList.end(), newPage->pageId);
-    if (position != freePageIDList.end())
-      freePageIDList.erase(position);
-  }
   newPage->pageId = newPageId;
 
   // Attempt to insert a page with page ID `newPageId` into `pages_`.
@@ -107,8 +101,8 @@ void LRUReplacementPageCache::changePageId(Page *page, unsigned newPageId) {
     pagesIterator->second = newPage;
     return;
   }
-  // put it back to free list
-  freePageIDList.push_back(newPageId);  
+  // replace it from free list
+  std::replace (freePageIDList.begin(), freePageIDList.end(), oldPageId, newPageId);
 }
 
 void LRUReplacementPageCache::discardPages(unsigned pageIdLimit) {

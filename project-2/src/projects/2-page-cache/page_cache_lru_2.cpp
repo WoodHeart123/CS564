@@ -54,7 +54,7 @@ Page *LRU2ReplacementPageCache::fetchPage(unsigned pageId, bool allocate) {
   // Parameter `allocate` is true. If the number of pages in the cache is less
   // than the maximum, allocate and return a pointer to a new page.
   if (getNumPages() < maxNumPages_) {
-    auto page = new LRUReplacementPage(pageSize_, extraSize_, pageId, true);
+    auto page = new LRU2ReplacementPage(pageSize_, extraSize_, pageId, true);
     pages_.emplace(pageId, page);
     return page;
   }
@@ -94,15 +94,9 @@ void LRU2ReplacementPageCache::unpinPage(Page *page, bool discard) {
 
 void LRU2ReplacementPageCache::changePageId(Page *page, unsigned newPageId) {
   auto *newPage = (LRU2ReplacementPage *) page;
-
+  unsigned oldPageId = newPage -> pageId;
   // Remove the old page ID from `pages_` and change the page ID.
   pages_.erase(newPage->pageId);
-  // remove it from free list
-  if(!newPage->pinned){
-    std::vector<unsigned>::iterator position = std::find(freePageIDList.begin(), freePageIDList.end(), newPage->pageId);
-    if (position != freePageIDList.end())
-      freePageIDList.erase(position);
-  }
   newPage->pageId = newPageId;
 
   // Attempt to insert a page with page ID `newPageId` into `pages_`.
@@ -114,8 +108,8 @@ void LRU2ReplacementPageCache::changePageId(Page *page, unsigned newPageId) {
     pagesIterator->second = newPage;
     return;
   }
-  // put it back to free list
-  freePageIDList.push_back(newPageId);  
+  // replace it from free list
+  std::replace(freePageIDList.begin(), freePageIDList.end(), oldPageId, newPageId);
 }
 
 void LRU2ReplacementPageCache::discardPages(unsigned pageIdLimit) {
