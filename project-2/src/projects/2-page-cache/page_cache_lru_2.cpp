@@ -7,6 +7,12 @@ LRU2ReplacementPageCache::LRU2ReplacementPage::LRU2ReplacementPage(
 
 LRU2ReplacementPageCache::LRU2ReplacementPageCache(int pageSize, int extraSize)
     : PageCache(pageSize, extraSize) {}
+    
+LRU2ReplacementPageCache::~LRU2ReplacementPageCache() {
+  for (auto &[pageId, page] : pages_) {
+    free(page);
+  }
+}
 
 void LRU2ReplacementPageCache::setMaxNumPages(int maxNumPages) {
   maxNumPages_ = maxNumPages;
@@ -61,13 +67,13 @@ Page *LRU2ReplacementPageCache::fetchPage(unsigned pageId, bool allocate) {
 
 
   // return existing unpinned page if there is an available page
-  if(freePageIDList.size > 1){
-    int unpinnedPageID; = freePageIDList[1];
+  if(freePageIDList.size() > 1){
+    int unpinnedPageID = freePageIDList[1];
     freePageIDList.erase(freePageIDList.begin()+1);
     pages_[unpinnedPageID] -> pinned = true;
     return pages_[unpinnedPageID];
-  }else if(freePageIDList.size == 1){
-    int unpinnedPageID; = freePageIDList[0];
+  }else if(freePageIDList.size() == 1){
+    int unpinnedPageID = freePageIDList[0];
     freePageIDList.erase(freePageIDList.begin());
     pages_[unpinnedPageID] -> pinned = true;
     return pages_[unpinnedPageID];
