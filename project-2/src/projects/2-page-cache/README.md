@@ -45,7 +45,7 @@ Page *fetchPage(unsigned pageId, bool allocate)
 			- If there is at least one unpinned page, return a pointer to an existing unpinned page as determined by the replacement policy.
 			- If all pages are pinned, return a null pointer.
 
-This function should be $O(1)$ or $O(\log n)$ with respect to the number of pages in the cache.
+Increment `numFetches_`, and if the fetch was a hit, increment `numHits_`. If the fetch was a hit, this function should be $O(1)$.
 
 ### Unpin a page
 
@@ -60,7 +60,7 @@ The page is unpinned regardless of the number of prior fetches, meaning it can b
 	- If the number of pages in the cache is greater than or equal to the maximum, discard the page.
 	- If the number of pages in the cache is less than the maximum, do not discard the page.
 
-This function should be $O(1)$ or $O(\log n)$ with respect to the number of pages in the cache.
+This function should be $O(1)$.
 
 ### Change the page ID associated with a page
 
@@ -81,6 +81,8 @@ If any of these pages are pinned, then they are implicitly unpinned, meaning the
 ## Page replacement policies
 
 You will implement two page replacement policies: **LRU** and **LRU-2**. We talked about how to implement LRU in class. LRU-K is a generalization of LRU that replaces the page whose K-th most recent access is the least recent. The advantage of LRU-K over LRU is that LRU-K considers both the frequency *and* recency of a page reference, whereas LRU considers only the recency. If you are interested in reading more about LRU-K, you can check out the [paper](https://www.cs.cmu.edu/~natassa/courses/15-721/papers/p297-o_neil.pdf). You will implement LRU-2. Specifically, your page replacement policy will replace the page whose second-to-last access is furthest in the past.
+
+When choosing a page to replace, your replacement policies should only consider the order in which pages were unpinned. For example, if page 1 was unpinned before page 2, then page 1 should be considered less recently used than page 2, regardless of the order in which the pages were fetched.
 
 In the code repository, we provide class stubs for your page cache implementations. In addition, we provide an example page cache implementation, which uses a random page replacement policy, in `page_cache_random.cpp` and `page_cache_random.hpp`. You can use this as a guide for your own implementations.
 

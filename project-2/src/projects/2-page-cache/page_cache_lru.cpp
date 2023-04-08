@@ -1,6 +1,6 @@
 #include "page_cache_lru.hpp"
 #include "utilities/exception.hpp"
-
+#include <iostream>
 
 LRUReplacementPageCache::LRUReplacementPage::LRUReplacementPage(
     int argPageSize, int argExtraSize, unsigned argPageId, bool argPinned)
@@ -39,8 +39,7 @@ Page *LRUReplacementPageCache::fetchPage(unsigned pageId, bool allocate) {
     ++numHits_;
     // remove from free list
     std::vector<unsigned>::iterator position = std::find(freePageIDList.begin(), freePageIDList.end(), pageId);
-    if (position != freePageIDList.end())
-      freePageIDList.erase(position);
+    if (position != freePageIDList.end()) freePageIDList.erase(position);
     pagesIterator->second->pinned = true;
     return pagesIterator->second;
   }
@@ -58,13 +57,14 @@ Page *LRUReplacementPageCache::fetchPage(unsigned pageId, bool allocate) {
     pages_.emplace(pageId, page);
     return page;
   }
-
   // return existing unpinned page if there is an available page
   if(!freePageIDList.empty()){
-    int unpinnedPageID = freePageIDList[0];
+    unsigned unpinnedPageID = freePageIDList[0];
+    LRUReplacementPage *newPage = pages_[unpinnedPageID];
     freePageIDList.erase(freePageIDList.begin());
-    pages_[unpinnedPageID] -> pinned = true;
-    return pages_[unpinnedPageID];
+    pages_.erase(unpinnedPageID);
+    pages_.emplace(pageId, newPage);
+    return newPage;
   }
 
   // All pages are pinned. Return a null pointer.
@@ -107,16 +107,16 @@ void LRUReplacementPageCache::changePageId(Page *page, unsigned newPageId) {
 
 void LRUReplacementPageCache::discardPages(unsigned pageIdLimit) {
     for (auto pagesIterator = pages_.begin(); pagesIterator != pages_.end();) {
-    if (pagesIterator->second->pageId >= pageIdLimit) {
-      // remove from free list
-      std::vector<unsigned>::iterator position = std::find(freePageIDList.begin(), freePageIDList.end(), pagesIterator->second->pageId);
-      if (position != freePageIDList.end())
-        freePageIDList.erase(position);
-      // delete from map
-      delete pagesIterator->second;
-      pagesIterator = pages_.erase(pagesIterator);
-    } else {
-      ++pagesIterator;
-    }
+      if (pagesIterator->second->pageId >= pageIdLimit) {
+        // remove from free list
+        std::vector<unsigned>::iterator position = std::find(freePageIDList.begin(), freePageIDList.end(), pagesIterator->second->pageId);
+        if (position != freePageIDList.end())
+          freePageIDList.erase(position);
+        // delete from map
+        delete pagesIterator->second;
+        pagesIterator = pages_.erase(pagesIterator);
+      } else {
+        ++pagesIterator;
+      }
   }
 }

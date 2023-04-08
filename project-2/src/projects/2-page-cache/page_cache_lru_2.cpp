@@ -69,14 +69,18 @@ Page *LRU2ReplacementPageCache::fetchPage(unsigned pageId, bool allocate) {
   // return existing unpinned page if there is an available page
   if(freePageIDList.size() > 1){
     int unpinnedPageID = freePageIDList[1];
-    freePageIDList.erase(freePageIDList.begin()+1);
-    pages_[unpinnedPageID] -> pinned = true;
-    return pages_[unpinnedPageID];
+    freePageIDList.erase(freePageIDList.begin() + 1);
+    LRU2ReplacementPage *newPage =  pages_[unpinnedPageID];
+    pages_.erase(pages_.find(unpinnedPageID));
+    pages_.emplace(pageId, newPage);
+    return newPage;
   }else if(freePageIDList.size() == 1){
     int unpinnedPageID = freePageIDList[0];
     freePageIDList.erase(freePageIDList.begin());
-    pages_[unpinnedPageID] -> pinned = true;
-    return pages_[unpinnedPageID];
+    LRU2ReplacementPage *newPage =  pages_[unpinnedPageID];
+    pages_.erase(pages_.find(unpinnedPageID));
+    pages_.emplace(pageId, newPage);
+    return newPage;
   }
   
 
