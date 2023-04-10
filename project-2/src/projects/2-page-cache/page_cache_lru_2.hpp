@@ -27,13 +27,15 @@ public:
 private:
     struct LRU2ReplacementPage : public Page {
     LRU2ReplacementPage(int pageSize, int extraSize, unsigned pageId,
-                          bool pinned);
+                          bool pinned, unsigned pinCount);
 
     unsigned pageId;
     bool pinned;
+    unsigned pinCount;
   };
 
   std::unordered_map<unsigned, LRU2ReplacementPage *> pages_;
+  std::vector<unsigned> freePageIDListOne;
   std::vector<unsigned> freePageIDList;
 };
 

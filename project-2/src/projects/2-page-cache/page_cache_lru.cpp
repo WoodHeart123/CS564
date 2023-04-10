@@ -20,7 +20,7 @@ void LRUReplacementPageCache::setMaxNumPages(int maxNumPages) {
 
   // try evict front of free list
   while(!freePageIDList.empty() && getNumPages() > maxNumPages_){
-    free(pages_[freePageIDList[0]]);
+    delete pages_[freePageIDList[0]];
     pages_.erase(freePageIDList[0]);
     freePageIDList.erase(freePageIDList.begin());
   } 
@@ -37,9 +37,6 @@ Page *LRUReplacementPageCache::fetchPage(unsigned pageId, bool allocate) {
   auto pagesIterator = pages_.find(pageId);
   if (pagesIterator != pages_.end()) {
     ++numHits_;
-    // remove from free list
-    std::vector<unsigned>::iterator position = std::find(freePageIDList.begin(), freePageIDList.end(), pageId);
-    if (position != freePageIDList.end()) freePageIDList.erase(position);
     pagesIterator->second->pinned = true;
     return pagesIterator->second;
   }
@@ -48,6 +45,13 @@ Page *LRUReplacementPageCache::fetchPage(unsigned pageId, bool allocate) {
   // return a null pointer.
   if (!allocate) {
     return nullptr;
+  }
+
+  auto freeListIterator = freePageIDList.begin();
+  while (freeListIterator != freePageIDList.end()) {
+    if (pages_[*freeListIterator] -> pinned) freeListIterator = freePageIDList.erase(freeListIterator);
+    else if(std::find(freeListIterator+1, freePageIDList.end(), *freeListIterator) != freePageIDList.end()) freeListIterator = freePageIDList.erase(freeListIterator);
+    else ++freeListIterator;
   }
 
   // Parameter `allocate` is true. If the number of pages in the cache is less
@@ -72,8 +76,7 @@ Page *LRUReplacementPageCache::fetchPage(unsigned pageId, bool allocate) {
 }
 
 void LRUReplacementPageCache::unpinPage(Page *page, bool discard) {
-    auto *discardPage = (LRUReplacementPage *) page;
-
+  auto *discardPage = (LRUReplacementPage *) page;
   // If discard is true or the number of pages in the cache is greater than the
   // maximum, discard the page. Otherwise, unpin the page.
   if (discard || getNumPages() > maxNumPages_) {
@@ -99,19 +102,23 @@ void LRUReplacementPageCache::changePageId(Page *page, unsigned newPageId) {
   if (!success) {
     delete pagesIterator->second;
     pagesIterator->second = newPage;
-    return;
+    std::vector<unsigned>::iterator position = std::find(freePageIDList.begin(), freePageIDList.end(), oldPageId);
+    if (position != freePageIDList.end()) freePageIDList.erase(position);
+  }else{
+    // if successfully inserted, replace it from free list
+    std::replace(freePageIDList.begin(), freePageIDList.end(), oldPageId, newPageId);
   }
-  // replace it from free list
-  std::replace (freePageIDList.begin(), freePageIDList.end(), oldPageId, newPageId);
+  
 }
 
 void LRUReplacementPageCache::discardPages(unsigned pageIdLimit) {
     for (auto pagesIterator = pages_.begin(); pagesIterator != pages_.end();) {
       if (pagesIterator->second->pageId >= pageIdLimit) {
         // remove from free list
-        std::vector<unsigned>::iterator position = std::find(freePageIDList.begin(), freePageIDList.end(), pagesIterator->second->pageId);
-        if (position != freePageIDList.end())
-          freePageIDList.erase(position);
+        if(!pagesIterator->second->pinned){
+          std::vector<unsigned>::iterator position = std::find(freePageIDList.begin(), freePageIDList.end(), pagesIterator->second->pageId);
+          if (position != freePageIDList.end()) freePageIDList.erase(position);
+        }
         // delete from map
         delete pagesIterator->second;
         pagesIterator = pages_.erase(pagesIterator);
