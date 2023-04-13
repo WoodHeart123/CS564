@@ -6,7 +6,8 @@
 #include <algorithm>
 #include "page_cache.hpp"
 
-class LRUReplacementPageCache : public PageCache {
+class LRUReplacementPageCache : public PageCache
+{
 public:
   /**
    * Construct a LRU Replacement Page Cache.
@@ -34,8 +35,8 @@ public:
 
   /**
    * Fetch and pin the page with the given pageId and return it's pointer.
-   * If the page is not in the cache and 'allocate' is false, return null pointer. 
-   * Else if 'allocate' is true and there is avaliable cache space, allocate and 
+   * If the page is not in the cache and 'allocate' is false, return null pointer.
+   * Else if 'allocate' is true and there is avaliable cache space, allocate and
    * return the pointer.
    * @param pageId Page id of the requested page.
    * @param allocate Flag to specify if a new page should be allocated if the requested page doesn't exist.
@@ -44,7 +45,7 @@ public:
   Page *fetchPage(unsigned int pageId, bool allocate) override;
 
   /**
-   * Unpin the given page and discard it if 'discard' is set.
+   * Unpin the given page and discard it if 'discard' is true or pages exceed cache capacity
    * @param page Pointer to the Page object to unpin and possibly discard.
    * @param discard Flag to specify if the page should be discarded.
    */
@@ -58,14 +59,15 @@ public:
   void changePageId(Page *page, unsigned int newPageId) override;
 
   /**
-   * Discard all pages in the cache with pageIds greater than or 
+   * Discard all pages in the cache with pageIds greater than or
    * equal to the given pageIdLimit.
-   * @param pageIdLimit Upper bound for pageIds to be discarded.
+   * @param pageIdLimit lower bound for pageIds to be discarded.
    */
   void discardPages(unsigned int pageIdLimit) override;
 
 private:
-  struct LRUReplacementPage : public Page {
+  struct LRUReplacementPage : public Page
+  {
     /**
      * Construct an LRUReplacementPage object.
      * @param pageSize Page size in bytes.
@@ -74,7 +76,7 @@ private:
      * @param pinned Page is pinned.
      */
     LRUReplacementPage(int pageSize, int extraSize, unsigned pageId,
-                          bool pinned);
+                       bool pinned);
 
     unsigned pageId;
     bool pinned;
@@ -82,7 +84,6 @@ private:
 
   std::unordered_map<unsigned, LRUReplacementPage *> pages_;
   std::vector<unsigned> freePageIDList;
-  
 };
 
 #endif // CS564_PROJECT_PAGE_CACHE_LRU_HPP
