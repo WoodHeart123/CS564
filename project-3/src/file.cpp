@@ -14,10 +14,10 @@ File::File(const std::string &name) : numReads_(0), numWrites_(0) {
   }
 }
 
-void File::read(void *buffer, int pageIndex, int numPages) {
+void File::read(void *dst, int pageIndex, int numPages) {
   int byteIndex = pageIndex * PAGE_SIZE;
   int numBytes = numPages * PAGE_SIZE;
-  int rc = file_->pMethods->xRead(file_, buffer, numBytes, byteIndex);
+  int rc = file_->pMethods->xRead(file_, dst, numBytes, byteIndex);
   if (rc != SQLITE_OK) {
     throw std::runtime_error(sqlite3_errstr(rc));
   }
@@ -25,17 +25,16 @@ void File::read(void *buffer, int pageIndex, int numPages) {
   numReads_ += numPages;
 }
 
-void File::write(void *buffer, int pageIndex, int numPages) {
+void File::write(void *src, int pageIndex, int numPages) {
   int rc;
   for (int pageNumber = 0; pageNumber < numPages; ++pageNumber) {
-    rc = file_->pMethods->xWrite(file_, buffer, PAGE_SIZE,
-                                 pageIndex * PAGE_SIZE);
+    rc = file_->pMethods->xWrite(file_, src, PAGE_SIZE, pageIndex * PAGE_SIZE);
     if (rc != SQLITE_OK) {
       throw std::runtime_error(sqlite3_errstr(rc));
     }
 
     ++pageIndex;
-    buffer = (char *)buffer + PAGE_SIZE;
+    src = (char *)src + PAGE_SIZE;
   }
 
   rc = file_->pMethods->xSync(file_, SQLITE_SYNC_FULL);

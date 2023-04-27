@@ -16,19 +16,19 @@ public:
 
   /**
    * Read pages from a file.
-   * @param buffer Read pages into this buffer.
-   * @param pageIndex Index of the starting page.
+   * @param dst Read pages into this memory.
+   * @param pageIndex Index of the starting page in the file.
    * @param numPages Number of pages to read.
    */
-  void read(void *buffer, int pageIndex, int numPages = 1);
+  void read(void *dst, int pageIndex, int numPages = 1);
 
   /**
    * Write pages to a file.
-   * @param buffer Write pages from this buffer.
-   * @param pageIndex Index of the starting page.
+   * @param src Write pages from this memory.
+   * @param pageIndex Index of the starting page in the file.
    * @param numPages Number of pages to write.
    */
-  void write(void *buffer, int pageIndex, int numPages = 1);
+  void write(void *src, int pageIndex, int numPages = 1);
 
   [[nodiscard]] int getNumReads() const;
 

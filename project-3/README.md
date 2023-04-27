@@ -85,6 +85,8 @@ Any remaining pages in the file after your output table can be created as needed
 
 ### Constraints
 
+#### I/O cost
+
 We will measure the I/O cost of your implementation. Given $P_R$ pages in `R`, $P_S$ pages in `S`, and $B$ buffer frames, the number of I/Os your implementation incurs must not exceed the following limits. 
 
 | Algorithm | Maximum number of reads                                | Maximum number of writes |
@@ -93,7 +95,9 @@ We will measure the I/O cost of your implementation. Given $P_R$ pages in `R`, $
 | SMJ       | $2(P_R + P_S)$                                         | $2P_R + P_S$             |
 | HJ        | $2(P_R + P_S)$                                         | $2P_R + P_S$             |
 
-We will also measure the peak heap memory usage of your implementation. You may use only the provided buffer to read in table data, and you should aim to allocate minimal heap memory beyond the provided buffer. However, you will likely need some additional memory for data structures and bookkeeping. We will allow you to allocate an additional 32 KiB plus 1 KiB for each page in the buffer. Thus, if your peak heap memory usage is less than or equal to $2^{10}(32 + B)$ bytes (not including the size of the buffer), you will receive full credit for this portion. In practice, this requirement should be easily satisfied. We will provide utilities for verifying this constraint.
+#### Memory usage
+
+We will also measure the peak heap memory usage of your implementation. You may use only the provided buffer to read in table data, and you should aim to allocate minimal heap memory beyond the provided buffer. However, you will likely need some additional memory for data structures and bookkeeping. We will allow an additional 100 KiB plus 1 KiB for each page in the buffer. Thus, if your peak heap memory usage is less than or equal to $2^{10}(100 + B)$ bytes (not including the size of the buffer), you will receive full credit for this portion. In practice, this requirement should be easily satisfied. Instructions for measuring peak heap memory usage are below.
 
 ## Building
 
@@ -141,6 +145,12 @@ Optionally, run the tests. Some tests will fail if you have just started the pro
 ctest .
 ```
 
+To measure peak heap memory usage, run the provided script. This will only work on a Linux machine with Valgrind installed. We recommend using one of the CSL Linux machines.
+
+```bash
+./test_memory.sh
+```
+
 ## Developing
 
 If you decide to host your code on GitHub, **use a private repository**. Points may be deducted if you use a public repository.
@@ -159,7 +169,7 @@ You are expected to develop your code using good C++ style. You don't have to fo
 
 Within each join algorithm (BNLJ, SMJ, HJ), the group with the fastest submission will receive 5 bonus points for this project. The group with the fastest overall submission (regardless of algorithm) will receive an additional 5 bonus points. Thus, you have the opportunity to earn up to 10 bonus points for this project. To be considered for the leaderboard, your implementation must be correct and satisfy the constraints on I/O cost and peak heap memory usage. Late submissions will not be considered.
 
-To evaluate submissions, we will run your code repeatedly and compute the mean latency. If there are extremely close ties, we may award bonus points to multiple groups. In the performance evaluation database, `R` and `S` will have 100,000 pages each. The buffer will have 1000 frames.
+To evaluate submissions, we will run your code repeatedly and compute the mean latency. If there are extremely close ties, we may award bonus points to multiple groups. In the performance evaluation database, `R` and `S` will have 100 pages each. The buffer will have 20 frames.
 
 ## Deliverables
 
