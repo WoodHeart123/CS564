@@ -17,58 +17,58 @@ int join(File &file, int numPagesR, int numPagesS, char *buffer, int numFrames)
   int pageIndexR = 0;
   int pageIndexS = pageIndexR + numPagesR;
   int pageIndexOut = pageIndexS + numPagesS;
-  int blockSize = numFrames * PAGE_SIZE;
-  int bufferIndex = 0;
 
-  int numBlocksR = (int)ceil((double)numPagesR * PAGE_SIZE / blockSize);
-  int numBlocksS = (int)ceil((double)numPagesS * PAGE_SIZE / blockSize);
+  int numTuplesOut = 0;
+  int blockSize = numFrames - 1;
+  int numTuplesPerBlock = blockSize * 512;
 
+  std::vector<Tuple> tuplesR(numTuplesPerBlock);
+  std::vector<Tuple> tuplesS(512);
   std::vector<Tuple> tuplesOut;
 
-  for (int i = 0; i < numBlocksR; i++)
+  // Iterate over R by block
+  for (int i = 0; i < numPagesR; i += blockSize)
   {
-    int numPagesRBlock = (i == numBlocksR - 1) ? numPagesR % (blockSize / PAGE_SIZE) : blockSize / PAGE_SIZE;
-    int pageIndexRBlock = pageIndexR + i * numPagesRBlock;
+    int blockPagesR = std::min(blockSize, numPagesR - i);
+    file.read(tuplesR.data(), pageIndexR + i, blockPagesR);
+    int numTuplesR = blockPagesR * 512;
 
-    for (int j = 0; j < numBlocksS; j++)
+    // Iterate over S
+    for (int j = 0; j < numPagesS; j++)
     {
-      int numPagesSBlock = (j == numBlocksS - 1) ? numPagesS % (blockSize / PAGE_SIZE) : blockSize / PAGE_SIZE;
-      int pageIndexSBlock = pageIndexS + j * numPagesSBlock;
+      file.read(tuplesS.data(), pageIndexS + j, 1);
 
-      file.read(buffer + bufferIndex, pageIndexRBlock, numPagesRBlock);
-      std::vector<Tuple> tuplesR((Tuple *)(buffer + bufferIndex), (Tuple *)(buffer + bufferIndex + numPagesRBlock * PAGE_SIZE));
-      bufferIndex += numPagesRBlock * PAGE_SIZE;
-
-      file.read(buffer + bufferIndex, pageIndexSBlock, numPagesSBlock);
-      std::vector<Tuple> tuplesS((Tuple *)(buffer + bufferIndex), (Tuple *)(buffer + bufferIndex + numPagesSBlock * PAGE_SIZE));
-      bufferIndex += numPagesSBlock * PAGE_SIZE;
-
-      for (const Tuple &tupleR : tuplesR)
+      // Iterate over tuples
+      for (int k = 0; k < numTuplesR; k++)
       {
+        const Tuple &tupleR = tuplesR[k];
+
         for (const Tuple &tupleS : tuplesS)
         {
           if (tupleR.first == tupleS.first)
           {
             tuplesOut.emplace_back(tupleR.second, tupleS.second);
+            if (tuplesOut.size() == 512)
+            {
+              file.write(tuplesOut.data(), pageIndexOut, 1);
+              pageIndexOut += 1;
+              numTuplesOut += 512;
+              tuplesOut.clear();
+            }
+            break;
           }
         }
-      }
-
-      if (bufferIndex + blockSize > numFrames * PAGE_SIZE)
-      {
-        int numTuplesOut = (int)tuplesOut.size();
-        int numPagesOut = numTuplesOut / (PAGE_SIZE / sizeof(Tuple)) + (numTuplesOut % (PAGE_SIZE / sizeof(Tuple)) != 0);
-
-        file.write(buffer, pageIndexOut, numPagesOut);
-        tuplesOut.clear();
-        bufferIndex = 0;
       }
     }
   }
 
-  int numTuplesOut = (int)tuplesOut.size();
-  int numPagesOut = numTuplesOut / (PAGE_SIZE / sizeof(Tuple)) + (numTuplesOut % (PAGE_SIZE / sizeof(Tuple)) != 0);
-  file.write(buffer, pageIndexOut, numPagesOut);
+  // Write any remaining tuples
+  if (!tuplesOut.empty())
+  {
+    int numPagesOut = tuplesOut.size() / 512 + (tuplesOut.size() % 512 != 0);
+    file.write(tuplesOut.data(), pageIndexOut, numPagesOut);
+    numTuplesOut += tuplesOut.size();
+  }
 
   return numTuplesOut;
 }
