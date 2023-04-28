@@ -38,11 +38,11 @@ int join(File &file, int numPagesR, int numPagesS, char *buffer, int numFrames)
     int blockPagesR = min(blockSizeR, numPagesR - i);
     file.read(tuplesR, pageIndexR + i, blockPagesR);
 
+    // Iterate over S
     for (int j = 0; j < numPagesS; j++)
     {
       file.read(tuplesS, pageIndexS + j, 1);
 
-      // Iterate over S
       for (int k = 0; k < blockPagesR * tuplePerPage; k++)
       {
         const Tuple &tupleR = *reinterpret_cast<Tuple *>(tuplesR + k * tupleSize);
