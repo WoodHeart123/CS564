@@ -19,9 +19,7 @@ int join(File &file, int numPagesR, int numPagesS, char *buffer, int numFrames)
   const int tuplePerPage = 512;
   const int tupleSize = 8;
 
-  int pageIndexR = 0;
-  int pageIndexS = pageIndexR + numPagesR;
-  int pageIndexOut = pageIndexS + numPagesS;
+  int pageIndexOut = numPagesR + numPagesS;
 
   // num of tuples in total
   int numTuplesOut = 0;
@@ -36,12 +34,12 @@ int join(File &file, int numPagesR, int numPagesS, char *buffer, int numFrames)
   for (int i = 0; i < numPagesR; i += blockSizeR)
   {
     int numBlockPagesR = min(blockSizeR, numPagesR - i);
-    file.read(tuplesR, pageIndexR + i, numBlockPagesR);
+    file.read(tuplesR, i, numBlockPagesR);
 
     // Iterate over S
     for (int j = 0; j < numPagesS; j++)
     {
-      file.read(tuplesS, pageIndexS + j, 1);
+      file.read(tuplesS, numPagesR + j, 1);
 
       // Iterate over tuples
       for (int k = 0; k < numBlockPagesR * tuplePerPage; k++)
