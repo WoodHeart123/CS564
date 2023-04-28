@@ -18,42 +18,52 @@ int join(File &file, int numPagesR, int numPagesS, char *buffer, int numFrames)
   int pageIndexS = pageIndexR + numPagesR;
   int pageIndexOut = pageIndexS + numPagesS;
 
+  // num of tuples in total
   int numTuplesOut = 0;
+  // num of tuples in buffer waiting to be written
+  int numTuplesBuffer = 0;
   int blockSize = numFrames - 1;
-  int numTuplesPerBlock = blockSize * 512;
 
-  std::vector<Tuple> tuplesR(numTuplesPerBlock);
-  std::vector<Tuple> tuplesS(512);
-  std::vector<Tuple> tuplesOut;
+  // BUFFER: tuplesR | tuplesS | tuplesOut
+  char *tuplesR = buffer;
+  char *tuplesS = buffer + blockSize * 4096;
+  char *tuplesOut = buffer + blockSize * 4096 + 4096;
+
+  int tupleSize = 8;
 
   // Iterate over R by block
   for (int i = 0; i < numPagesR; i += blockSize)
   {
     int blockPagesR = std::min(blockSize, numPagesR - i);
-    file.read(tuplesR.data(), pageIndexR + i, blockPagesR);
+    file.read(tuplesR, pageIndexR + i, blockPagesR);
     int numTuplesR = blockPagesR * 512;
 
     // Iterate over S
     for (int j = 0; j < numPagesS; j++)
     {
-      file.read(tuplesS.data(), pageIndexS + j, 1);
+      file.read(tuplesS, pageIndexS + j, 1);
 
       // Iterate over tuples
-      for (int k = 0; k < numTuplesR; k++)
+      for (int k = 0; k < blockPagesR * 512; k++)
       {
-        const Tuple &tupleR = tuplesR[k];
+        const Tuple &tupleR = *reinterpret_cast<Tuple *>(tuplesR + k * tupleSize);
 
-        for (const Tuple &tupleS : tuplesS)
+        for (int l = 0; l < 512; l++)
         {
+          const Tuple &tupleS = *reinterpret_cast<Tuple *>(tuplesS + l * tupleSize);
+
           if (tupleR.first == tupleS.first)
           {
-            tuplesOut.emplace_back(tupleR.second, tupleS.second);
-            if (tuplesOut.size() == 512)
+            Tuple resultTuple(tupleR.second, tupleS.second);
+            std::memcpy(tuplesOut + numTuplesOut * 8, &resultTuple, tupleSize);
+            numTuplesBuffer++;
+
+            if (numTuplesBuffer == 512)
             {
-              file.write(tuplesOut.data(), pageIndexOut, 1);
-              pageIndexOut += 1;
-              numTuplesOut += 512;
-              tuplesOut.clear();
+              file.write(tuplesOut, pageIndexOut, 1);
+              pageIndexOut++;
+              numTuplesOut += numTuplesBuffer;
+              numTuplesBuffer = 0;
             }
             break;
           }
@@ -63,11 +73,12 @@ int join(File &file, int numPagesR, int numPagesS, char *buffer, int numFrames)
   }
 
   // Write any remaining tuples
-  if (!tuplesOut.empty())
+  if (numTuplesBuffer > 0)
   {
-    int numPagesOut = tuplesOut.size() / 512 + (tuplesOut.size() % 512 != 0);
-    file.write(tuplesOut.data(), pageIndexOut, numPagesOut);
-    numTuplesOut += tuplesOut.size();
+    int numPagesOut = numTuplesBuffer / 512 + (numTuplesBuffer % 512 != 0);
+    file.write(tuplesOut, pageIndexOut, numPagesOut);
+    numTuplesOut += numTuplesBuffer;
+    numTuplesBuffer = 0;
   }
 
   return numTuplesOut;
