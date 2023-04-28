@@ -10,7 +10,7 @@
 #include <unordered_set>
 #include <vector>
 
-static int seed = 123;
+static int seed = 564;
 
 void testJoinGetAlgorithm()
 {
@@ -153,6 +153,9 @@ void testJoin(const std::string &name, int numPagesR, int numPagesS,
       maxNumWrites = 2 * numPagesR + numPagesS;
       break;
     }
+
+    std::cout << "Num Reads: " << numReads << " Max Reads: " << maxNumReads << std::endl;
+    std::cout << "Num Writes: " << numWrites << " Max Writes: " << maxNumWrites << std::endl;
 
     TEST_ASSERT(numReads <= maxNumReads, "exceeded read limit");
     TEST_ASSERT(numWrites <= maxNumWrites, "exceeded write limit");
