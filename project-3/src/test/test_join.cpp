@@ -186,6 +186,8 @@ void testIO5() { testJoin("test.tbl", 4, 8, 6, 400, true); }
 
 void testIO6() { testJoin("test.tbl", 16, 32, 9, 1600, true); }
 
+void testIO7() { testJoin("test.tbl", 32, 16, 9, 1600, true); }
+
 void testSpeed1() { testJoin("test.tbl", 100, 100, 20, 1600, true); }
 
 int main(int argc, char **argv)
@@ -208,6 +210,7 @@ int main(int argc, char **argv)
   TEST_RUN(testIO4);
   TEST_RUN(testIO5);
   TEST_RUN(testIO6);
+  TEST_RUN(testIO7);
   TEST_RUN(testSpeed1);
   return TEST_EXIT_CODE;
 }
