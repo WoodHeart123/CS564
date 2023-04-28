@@ -25,8 +25,6 @@ int join(File &file, int numPagesR, int numPagesS, char *buffer, int numFrames)
 
   // num of tuples in total
   int numTuplesOut = 0;
-  // num of tuples in buffer waiting to be written
-  int numTuplesBuffer = 0;
 
   int blockSizeR = numFrames - 2;
   // BUFFER: tuplesR | tuplesS | tuplesOut
@@ -58,15 +56,13 @@ int join(File &file, int numPagesR, int numPagesS, char *buffer, int numFrames)
           {
             Tuple resultTuple(tupleR.second, tupleS.second);
             // Write to buffer
-            memcpy(tuplesOut + numTuplesBuffer * tupleSize, &resultTuple, tupleSize);
-            numTuplesBuffer++;
+            memcpy(tuplesOut + (numTuplesOut % tuplePerPage) * tupleSize, &resultTuple, tupleSize);
+            numTuplesOut++;
 
-            if (numTuplesBuffer == tuplePerPage)
+            if (numTuplesOut % tuplePerPage == 0)
             {
               file.write(tuplesOut, pageIndexOut, 1);
               pageIndexOut++;
-              numTuplesOut += numTuplesBuffer;
-              numTuplesBuffer = 0;
             }
             break;
           }
@@ -76,12 +72,10 @@ int join(File &file, int numPagesR, int numPagesS, char *buffer, int numFrames)
   }
 
   // Write any remaining tuples
-  if (numTuplesBuffer > 0)
+  if (numTuplesOut % tuplePerPage != 0)
   {
-    int numPagesOut = numTuplesBuffer / tuplePerPage + (numTuplesBuffer % tuplePerPage != 0);
+    int numPagesOut = (numTuplesOut % tuplePerPage) / tuplePerPage + ((numTuplesOut % tuplePerPage) % tuplePerPage != 0);
     file.write(tuplesOut, pageIndexOut, numPagesOut);
-    numTuplesOut += numTuplesBuffer;
-    numTuplesBuffer = 0;
   }
 
   return numTuplesOut;
