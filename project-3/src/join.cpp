@@ -14,6 +14,9 @@ JoinAlgorithm getJoinAlgorithm()
 
 int join(File &file, int numPagesR, int numPagesS, char *buffer, int numFrames)
 {
+  const int tuplePerPage = 512;
+  const int tupleSize = 8;
+
   int pageIndexR = 0;
   int pageIndexS = pageIndexR + numPagesR;
   int pageIndexOut = pageIndexS + numPagesS;
@@ -22,43 +25,41 @@ int join(File &file, int numPagesR, int numPagesS, char *buffer, int numFrames)
   int numTuplesOut = 0;
   // num of tuples in buffer waiting to be written
   int numTuplesBuffer = 0;
-  int blockSize = numFrames - 1;
 
+  int blockSizeR = numFrames - 2;
   // BUFFER: tuplesR | tuplesS | tuplesOut
   char *tuplesR = buffer;
-  char *tuplesS = buffer + blockSize * 4096;
-  char *tuplesOut = buffer + blockSize * 4096 + 4096;
-
-  int tupleSize = 8;
+  char *tuplesS = buffer + blockSizeR * tuplePerPage * tupleSize;
+  char *tuplesOut = buffer + (blockSizeR + 1) * tuplePerPage * tupleSize;
 
   // Iterate over R by block
-  for (int i = 0; i < numPagesR; i += blockSize)
+  for (int i = 0; i < numPagesR; i += blockSizeR)
   {
-    int blockPagesR = std::min(blockSize, numPagesR - i);
+    int blockPagesR = std::min(blockSizeR, numPagesR - i);
     file.read(tuplesR, pageIndexR + i, blockPagesR);
-    int numTuplesR = blockPagesR * 512;
 
-    // Iterate over S
     for (int j = 0; j < numPagesS; j++)
     {
       file.read(tuplesS, pageIndexS + j, 1);
 
-      // Iterate over tuples
-      for (int k = 0; k < blockPagesR * 512; k++)
+      // Iterate over S
+      for (int k = 0; k < blockPagesR * tuplePerPage; k++)
       {
         const Tuple &tupleR = *reinterpret_cast<Tuple *>(tuplesR + k * tupleSize);
 
-        for (int l = 0; l < 512; l++)
+        // Iterate over tuples
+        for (int l = 0; l < tuplePerPage; l++)
         {
           const Tuple &tupleS = *reinterpret_cast<Tuple *>(tuplesS + l * tupleSize);
 
           if (tupleR.first == tupleS.first)
           {
             Tuple resultTuple(tupleR.second, tupleS.second);
-            std::memcpy(tuplesOut + numTuplesOut * 8, &resultTuple, tupleSize);
+            // Write to buffer
+            std::memcpy(tuplesOut + numTuplesBuffer * tupleSize, &resultTuple, tupleSize);
             numTuplesBuffer++;
 
-            if (numTuplesBuffer == 512)
+            if (numTuplesBuffer == tuplePerPage)
             {
               file.write(tuplesOut, pageIndexOut, 1);
               pageIndexOut++;
@@ -75,7 +76,7 @@ int join(File &file, int numPagesR, int numPagesS, char *buffer, int numFrames)
   // Write any remaining tuples
   if (numTuplesBuffer > 0)
   {
-    int numPagesOut = numTuplesBuffer / 512 + (numTuplesBuffer % 512 != 0);
+    int numPagesOut = numTuplesBuffer / tuplePerPage + (numTuplesBuffer % tuplePerPage != 0);
     file.write(tuplesOut, pageIndexOut, numPagesOut);
     numTuplesOut += numTuplesBuffer;
     numTuplesBuffer = 0;
