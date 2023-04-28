@@ -3,24 +3,30 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <ctime>
 #include <numeric>
 #include <random>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
 
-static int seed = 0;
+static int seed = 123;
 
-void testJoinGetAlgorithm() {
-  try {
+void testJoinGetAlgorithm()
+{
+  try
+  {
     getJoinAlgorithm();
-  } catch (const std::exception &e) {
+  }
+  catch (const std::exception &e)
+  {
     TEST_ASSERT(false, e.what());
   }
 }
 
 void testJoin(const std::string &name, int numPagesR, int numPagesS,
-              int numFrames, int numTuplesShared, bool testIO = false) {
+              int numFrames, int numTuplesShared, bool testIO = false)
+{
   // ---------------------------------------------------------------------------
   // Step 1: Generate the data.
   // ---------------------------------------------------------------------------
@@ -36,7 +42,8 @@ void testJoin(const std::string &name, int numPagesR, int numPagesS,
 
   std::unordered_set<uint32_t> keysShared;
   keysShared.reserve(numTuplesShared);
-  while (keysShared.size() < numTuplesShared) {
+  while (keysShared.size() < numTuplesShared)
+  {
     keysShared.emplace(dis(rng));
   }
 
@@ -46,7 +53,8 @@ void testJoin(const std::string &name, int numPagesR, int numPagesS,
   std::unordered_map<uint32_t, uint32_t> tupleSetS;
   tupleSetS.reserve(numTuplesS);
 
-  for (uint32_t a : keysShared) {
+  for (uint32_t a : keysShared)
+  {
     uint32_t bR = dis(rng);
     uint32_t bS = dis(rng);
     tupleVectorShared.emplace_back(bR, bS);
@@ -54,17 +62,21 @@ void testJoin(const std::string &name, int numPagesR, int numPagesS,
     tupleSetS.emplace(a, bS);
   }
 
-  while (tupleSetR.size() < numTuplesR) {
+  while (tupleSetR.size() < numTuplesR)
+  {
     uint32_t a = dis(rng);
-    if (tupleSetR.find(a) == tupleSetR.end()) {
+    if (tupleSetR.find(a) == tupleSetR.end())
+    {
       tupleSetR.emplace(a, dis(rng));
     }
   }
 
-  while (tupleSetS.size() < numTuplesS) {
+  while (tupleSetS.size() < numTuplesS)
+  {
     uint32_t a = dis(rng);
     if (tupleSetR.find(a) == tupleSetR.end() &&
-        tupleSetS.find(a) == tupleSetS.end()) {
+        tupleSetS.find(a) == tupleSetS.end())
+    {
       tupleSetS.emplace(a, dis(rng));
     }
   }
@@ -84,7 +96,14 @@ void testJoin(const std::string &name, int numPagesR, int numPagesS,
   // ---------------------------------------------------------------------------
 
   char *buffer = new char[numFrames * 4096];
+
+  // Measurement of Execution Speed refered from https://www.geeksforgeeks.org/measure-execution-time-function-cpp/
+  auto start = std::chrono::high_resolution_clock::now();
   int numTuplesOut = join(file, numPagesR, numPagesS, buffer, numFrames);
+  auto stop = std::chrono::high_resolution_clock::now();
+  auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+  std::cout << "JOIN time: " << duration.count() << " ms" << std::endl;
+
   int numPagesOut = numTuplesOut / 512 + (numTuplesOut % 512 != 0);
   int numReads = file.getNumReads();
   int numWrites = file.getNumWrites() - numPagesR - numPagesS;
@@ -106,18 +125,23 @@ void testJoin(const std::string &name, int numPagesR, int numPagesS,
   // Step 4: Validate I/O cost.
   // ---------------------------------------------------------------------------
 
-  if (testIO) {
+  if (testIO)
+  {
     JoinAlgorithm algorithm;
-    try {
+    try
+    {
       algorithm = getJoinAlgorithm();
-    } catch (const std::exception &e) {
+    }
+    catch (const std::exception &e)
+    {
       TEST_ASSERT(false, e.what());
     }
 
     int maxNumReads;
     int maxNumWrites;
 
-    switch (algorithm) {
+    switch (algorithm)
+    {
     case JOIN_ALGORITHM_BNLJ:
       maxNumReads = numPagesR + numPagesS * (int)std::ceil((double)numPagesR /
                                                            (numFrames - 2));
@@ -159,8 +183,12 @@ void testIO5() { testJoin("test.tbl", 4, 8, 6, 400, true); }
 
 void testIO6() { testJoin("test.tbl", 16, 32, 9, 1600, true); }
 
-int main(int argc, char **argv) {
-  if (argc > 1) {
+void testSpeed1() { testJoin("test.tbl", 100, 100, 20, 1600, true); }
+
+int main(int argc, char **argv)
+{
+  if (argc > 1)
+  {
     seed = std::stoi(argv[1]);
   }
 
@@ -177,5 +205,6 @@ int main(int argc, char **argv) {
   TEST_RUN(testIO4);
   TEST_RUN(testIO5);
   TEST_RUN(testIO6);
+  TEST_RUN(testSpeed1);
   return TEST_EXIT_CODE;
 }
