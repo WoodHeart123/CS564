@@ -4,6 +4,8 @@
 #include <cstdint>
 #include <vector>
 
+using namespace std;
+
 JoinAlgorithm getJoinAlgorithm()
 {
   return JOIN_ALGORITHM_BNLJ;
@@ -35,7 +37,7 @@ int join(File &file, int numPagesR, int numPagesS, char *buffer, int numFrames)
   // Iterate over R by block
   for (int i = 0; i < numPagesR; i += blockSizeR)
   {
-    int blockPagesR = std::min(blockSizeR, numPagesR - i);
+    int blockPagesR = min(blockSizeR, numPagesR - i);
     file.read(tuplesR, pageIndexR + i, blockPagesR);
 
     for (int j = 0; j < numPagesS; j++)
@@ -56,7 +58,7 @@ int join(File &file, int numPagesR, int numPagesS, char *buffer, int numFrames)
           {
             Tuple resultTuple(tupleR.second, tupleS.second);
             // Write to buffer
-            std::memcpy(tuplesOut + numTuplesBuffer * tupleSize, &resultTuple, tupleSize);
+            memcpy(tuplesOut + numTuplesBuffer * tupleSize, &resultTuple, tupleSize);
             numTuplesBuffer++;
 
             if (numTuplesBuffer == tuplePerPage)
