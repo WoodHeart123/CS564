@@ -42,7 +42,7 @@ int join(File &file, int numPagesR, int numPagesS, char *buffer, int numFrames)
     // Iterate over S
     for (int j = 0; j < numPagesS; j++)
     {
-      file.read(tuplesS, numPagesR + j, 1);
+      file.read(tuplesS, numPagesR + j);
 
       // The end of the currently loaded S block
       char *tuplesSPageEnd = tuplesS + tuplePerPage * tupleSize;
@@ -62,14 +62,15 @@ int join(File &file, int numPagesR, int numPagesS, char *buffer, int numFrames)
 
           if (tupleR.first == tupleS.first)
           {
-            Tuple resultTuple(tupleR.second, tupleS.second);
             // Write to buffer
-            memcpy(tuplesOut + (numTuplesOut % tuplePerPage) * tupleSize, &resultTuple, tupleSize);
+            Tuple *resultTuplePtr = reinterpret_cast<Tuple *>(tuplesOut + (numTuplesOut % tuplePerPage) * tupleSize);
+            resultTuplePtr->first = tupleR.second;
+            resultTuplePtr->second = tupleS.second;
             numTuplesOut++;
 
             if (numTuplesOut % tuplePerPage == 0)
             {
-              file.write(tuplesOut, pageIndexOut, 1);
+              file.write(tuplesOut, pageIndexOut);
               pageIndexOut++;
             }
             break;
@@ -84,8 +85,7 @@ int join(File &file, int numPagesR, int numPagesS, char *buffer, int numFrames)
   // Write any remaining tuples
   if (numTuplesOut % tuplePerPage != 0)
   {
-    int numPagesOut = numTuplesOut / tuplePerPage + ((numTuplesOut % tuplePerPage) != 0);
-    file.write(tuplesOut, pageIndexOut, numPagesOut);
+    file.write(tuplesOut, pageIndexOut);
   }
 
   return numTuplesOut;
