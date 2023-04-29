@@ -36,19 +36,29 @@ int join(File &file, int numPagesR, int numPagesS, char *buffer, int numFrames)
     int numBlockPagesR = min(blockSizeR, numPagesR - i);
     file.read(tuplesR, i, numBlockPagesR);
 
+    // The end of the currently loaded R blocks
+    char *tuplesRBlockEnd = tuplesR + numBlockPagesR * tuplePerPage * tupleSize;
+
     // Iterate over S
     for (int j = 0; j < numPagesS; j++)
     {
       file.read(tuplesS, numPagesR + j, 1);
 
-      // Iterate over tuples
-      for (int k = 0; k < numBlockPagesR * tuplePerPage; k++)
-      {
-        const Tuple &tupleR = *reinterpret_cast<Tuple *>(tuplesR + k * tupleSize);
+      // The end of the currently loaded S block
+      char *tuplesSPageEnd = tuplesS + tuplePerPage * tupleSize;
+      // The current R tuple being examed
+      char *tuplesRBlockPtr = tuplesR;
 
-        for (int l = 0; l < tuplePerPage; l++)
+      // Iterate over tuples until exceeding the addr range
+      while (tuplesRBlockPtr < tuplesRBlockEnd)
+      {
+        const Tuple &tupleR = *reinterpret_cast<Tuple *>(tuplesRBlockPtr);
+        // The current S tuple being examed
+        char *tuplesSPagePtr = tuplesS;
+
+        while (tuplesSPagePtr < tuplesSPageEnd)
         {
-          const Tuple &tupleS = *reinterpret_cast<Tuple *>(tuplesS + l * tupleSize);
+          const Tuple &tupleS = *reinterpret_cast<Tuple *>(tuplesSPagePtr);
 
           if (tupleR.first == tupleS.first)
           {
@@ -64,7 +74,9 @@ int join(File &file, int numPagesR, int numPagesS, char *buffer, int numFrames)
             }
             break;
           }
+          tuplesSPagePtr += tupleSize;
         }
+        tuplesRBlockPtr += tupleSize;
       }
     }
   }
@@ -72,7 +84,7 @@ int join(File &file, int numPagesR, int numPagesS, char *buffer, int numFrames)
   // Write any remaining tuples
   if (numTuplesOut % tuplePerPage != 0)
   {
-    int numPagesOut = (numTuplesOut % tuplePerPage) / tuplePerPage + ((numTuplesOut % tuplePerPage) % tuplePerPage != 0);
+    int numPagesOut = numTuplesOut / tuplePerPage + ((numTuplesOut % tuplePerPage) != 0);
     file.write(tuplesOut, pageIndexOut, numPagesOut);
   }
 
