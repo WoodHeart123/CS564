@@ -24,16 +24,16 @@ int join(File &file, int numPagesR, int numPagesS, char *buffer, int numFrames)
   // num of tuples in total
   int numTuplesOut = 0;
 
-  int blockSizeR = numFrames - 2;
+  int numBlockR = numFrames - 2;
   // BUFFER: tuplesR | tuplesS | tuplesOut
   char *tuplesR = buffer;
-  char *tuplesS = buffer + blockSizeR * tuplePerPage * tupleSize;
-  char *tuplesOut = buffer + (blockSizeR + 1) * tuplePerPage * tupleSize;
+  char *tuplesS = buffer + numBlockR * tuplePerPage * tupleSize;
+  char *tuplesOut = buffer + (numBlockR + 1) * tuplePerPage * tupleSize;
 
   // Iterate over R by block
-  for (int i = 0; i < numPagesR; i += blockSizeR)
+  for (int i = 0; i < numPagesR; i += numBlockR)
   {
-    int numBlockPagesR = min(blockSizeR, numPagesR - i);
+    int numBlockPagesR = min(numBlockR, numPagesR - i);
     file.read(tuplesR, i, numBlockPagesR);
 
     // The end of the currently loaded R blocks
