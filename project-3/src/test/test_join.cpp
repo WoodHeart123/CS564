@@ -102,7 +102,7 @@ void testJoin(const std::string &name, int numPagesR, int numPagesS,
   int numTuplesOut = join(file, numPagesR, numPagesS, buffer, numFrames);
   auto stop = std::chrono::high_resolution_clock::now();
   auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-  std::cout << "JOIN time: " << duration.count() << " ms" << std::endl;
+  std::cout << "JOIN time: " << duration.count() << " μs" << std::endl;
 
   int numPagesOut = numTuplesOut / 512 + (numTuplesOut % 512 != 0);
   int numReads = file.getNumReads();
